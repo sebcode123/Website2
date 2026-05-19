@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import { CalendarCheck, Car, CheckCircle, Phone, Sparkles } from "lucide-react";
 import logoImage from "../logo.png";
 
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xqejedry";
+
 const backgroundImage =
   "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1600&auto=format&fit=crop";
 
@@ -54,12 +56,14 @@ export default function App() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const total = useMemo(() => {
     const addOnTotal = selectedAddOns.reduce(
       (sum, item) => sum + (typeof item.price === "number" ? item.price : 0),
       0
     );
+
     return service.price + carType.extra + addOnTotal;
   }, [service, carType, selectedAddOns]);
 
@@ -71,8 +75,29 @@ export default function App() {
     );
   };
 
-  const bookingDetails = `
-New Dior Detailing Booking
+  const addOnText = selectedAddOns.length
+    ? selectedAddOns.map((item) => item.name).join(", ")
+    : "None";
+
+  const handleConfirmBooking = async () => {
+    if (!date || !customerName.trim() || !customerPhone.trim() || !customerEmail.trim()) {
+      alert("Please choose a date and fill out your full name, phone number, and email before booking.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const formData = {
+      name: customerName,
+      phone: customerPhone,
+      email: customerEmail,
+      vehicle: carType.name,
+      service: service.name,
+      add_ons: addOnText,
+      date,
+      time,
+      estimated_total: `$${total}+`,
+      message: `New Dior Detailing Booking
 
 Name: ${customerName}
 Phone: ${customerPhone}
@@ -80,73 +105,80 @@ Email: ${customerEmail}
 
 Vehicle: ${carType.name}
 Service: ${service.name}
-Add Ons: ${
-    selectedAddOns.length
-      ? selectedAddOns.map((item) => item.name).join(", ")
-      : "None"
-  }
+Add Ons: ${addOnText}
 
 Date: ${date}
 Time: ${time}
 
-Estimated Total: $${total}+
-`;
+Estimated Total: $${total}+`,
+    };
 
-  const bookingMessage = encodeURIComponent(bookingDetails);
+    try {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-  const handleConfirmBooking = () => {
-    if (!date || !customerName.trim() || !customerPhone.trim() || !customerEmail.trim()) {
-      alert("Please choose a date and fill out your full name, phone number, and email before booking.");
-      return;
+      if (!response.ok) {
+        throw new Error("Booking could not be sent.");
+      }
+
+      setBookingConfirmed(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      alert("Something went wrong sending the booking. Please try again or call (845) 376-6000.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setBookingConfirmed(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (bookingConfirmed) {
     return (
       <div className="min-h-screen bg-black px-6 py-20 text-white">
         <div className="mx-auto max-w-3xl rounded-[2rem] border border-sky-400/30 bg-neutral-950 p-8 text-center shadow-2xl md:p-14">
-          <img src={logoImage} alt="Dior Detailing" className="mx-auto mb-8 w-56 drop-shadow-[0_0_35px_rgba(56,189,248,0.45)]" />
+          <img
+            src={logoImage}
+            alt="Dior Detailing"
+            className="mx-auto mb-8 w-56 drop-shadow-[0_0_35px_rgba(56,189,248,0.45)]"
+          />
 
           <CheckCircle className="mx-auto mb-6 h-16 w-16 text-sky-400" />
 
-          <h1 className="text-4xl font-black md:text-6xl">Booking Request Confirmed</h1>
+          <h1 className="text-4xl font-black md:text-6xl">
+            Booking Request Confirmed
+          </h1>
 
           <p className="mt-5 text-lg leading-8 text-neutral-300">
-            Thank you, {customerName}. Your Dior Detailing booking request has been submitted.
+            Thank you, {customerName}. Your booking request was sent to Dior Detailing.
           </p>
 
           <div className="mt-8 rounded-3xl bg-white/10 p-6 text-left">
-            <h2 className="mb-4 text-2xl font-black text-sky-400">Booking Summary</h2>
+            <h2 className="mb-4 text-2xl font-black text-sky-400">
+              Booking Summary
+            </h2>
             <p><strong>Vehicle:</strong> {carType.name}</p>
             <p><strong>Service:</strong> {service.name}</p>
-            <p><strong>Add Ons:</strong> {selectedAddOns.length ? selectedAddOns.map((item) => item.name).join(", ") : "None"}</p>
+            <p><strong>Add Ons:</strong> {addOnText}</p>
             <p><strong>Date:</strong> {date}</p>
             <p><strong>Time:</strong> {time}</p>
             <p><strong>Estimated Total:</strong> ${total}+</p>
           </div>
 
           <div className="mt-8 rounded-3xl border border-sky-400/30 bg-sky-400/10 p-6">
-            <p className="text-neutral-200">Confirmation reminder will be sent to:</p>
+            <p className="text-neutral-200">
+              We’ll contact you using:
+            </p>
             <p className="mt-3 font-bold text-sky-300">{customerPhone}</p>
             <p className="font-bold text-sky-300">{customerEmail}</p>
-            <p className="mt-4 text-sm text-neutral-400">
-              Note: automatic email/text reminders require a backend service later. This screen confirms the request for now.
-            </p>
           </div>
-
-          <a
-            href={`sms:8453766000?body=${bookingMessage}`}
-            className="mt-8 block rounded-full bg-sky-400 px-8 py-4 font-black text-black transition hover:scale-[1.02]"
-          >
-            Text Booking Details to Dior Detailing
-          </a>
 
           <button
             onClick={() => setBookingConfirmed(false)}
-            className="mt-4 rounded-full border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+            className="mt-8 rounded-full border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
           >
             Back to Website
           </button>
@@ -159,26 +191,44 @@ Estimated Total: $${total}+
     <div className="bg-black text-white">
       <section
         className="relative min-h-screen overflow-hidden"
-        style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
       >
         <div className="absolute inset-0 bg-black/75" />
 
         <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-          <img src={logoImage} alt="Dior Detailing" className="mb-8 w-72 max-w-full drop-shadow-[0_0_40px_rgba(56,189,248,0.55)]" />
+          <img
+            src={logoImage}
+            alt="Dior Detailing"
+            className="mb-8 w-72 max-w-full drop-shadow-[0_0_40px_rgba(56,189,248,0.55)]"
+          />
 
-          <h1 className="text-5xl font-black tracking-tight md:text-7xl">Dior Detailing</h1>
+          <h1 className="text-5xl font-black tracking-tight md:text-7xl">
+            Dior Detailing
+          </h1>
 
           <p className="mt-4 text-lg text-neutral-300 md:text-2xl">
             Luxury Auto Detailing • Est. 2022
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a href="tel:8453766000" className="rounded-full bg-sky-400 px-8 py-4 font-bold text-black transition hover:scale-105">
+            <a
+              href="tel:8453766000"
+              className="rounded-full bg-sky-400 px-8 py-4 font-bold text-black transition hover:scale-105"
+            >
               <Phone className="mr-2 inline h-5 w-5" />
               Call Now
             </a>
 
-            <a href="https://instagram.com/diordetailinginc" target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/20 bg-white/10 px-8 py-4 font-bold backdrop-blur transition hover:bg-white/20">
+            <a
+              href="https://instagram.com/diordetailinginc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-white/20 bg-white/10 px-8 py-4 font-bold backdrop-blur transition hover:bg-white/20"
+            >
               @diordetailinginc
             </a>
           </div>
@@ -190,7 +240,10 @@ Estimated Total: $${total}+
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {serviceCards.map((item) => (
-            <div key={item.title} className="rounded-3xl border border-white/10 bg-neutral-900 p-8 shadow-2xl">
+            <div
+              key={item.title}
+              className="rounded-3xl border border-white/10 bg-neutral-900 p-8 shadow-2xl"
+            >
               <Sparkles className="mb-5 h-10 w-10 text-sky-400" />
               <h3 className="text-2xl font-bold">{item.title}</h3>
               <p className="mt-4 text-neutral-400">{item.desc}</p>
@@ -213,12 +266,16 @@ Estimated Total: $${total}+
                     key={item.name}
                     onClick={() => setCarType(item)}
                     className={`rounded-3xl border p-6 text-left transition ${
-                      carType.name === item.name ? "border-sky-500 bg-sky-100" : "border-neutral-300 bg-white"
+                      carType.name === item.name
+                        ? "border-sky-500 bg-sky-100"
+                        : "border-neutral-300 bg-white"
                     }`}
                   >
                     <Car className="mb-3 h-7 w-7" />
                     <div className="text-xl font-bold">{item.name}</div>
-                    <div className="mt-1 text-neutral-500">{item.extra ? `+$${item.extra}` : "No extra charge"}</div>
+                    <div className="mt-1 text-neutral-500">
+                      {item.extra ? `+$${item.extra}` : "No extra charge"}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -231,11 +288,15 @@ Estimated Total: $${total}+
                     key={item.name}
                     onClick={() => setService(item)}
                     className={`rounded-3xl border p-6 text-left transition ${
-                      service.name === item.name ? "border-sky-500 bg-sky-100" : "border-neutral-300 bg-white"
+                      service.name === item.name
+                        ? "border-sky-500 bg-sky-100"
+                        : "border-neutral-300 bg-white"
                     }`}
                   >
                     <div className="text-xl font-bold">{item.name}</div>
-                    <div className="mt-1 text-neutral-500">Starting at ${item.price}</div>
+                    <div className="mt-1 text-neutral-500">
+                      Starting at ${item.price}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -255,7 +316,9 @@ Estimated Total: $${total}+
                   >
                     <span className="font-semibold">{item.name}</span>
                     <span className="font-bold">
-                      {typeof item.price === "number" ? `+$${item.price}` : item.price}
+                      {typeof item.price === "number"
+                        ? `+$${item.price}`
+                        : item.price}
                     </span>
                   </button>
                 ))}
@@ -266,7 +329,6 @@ Estimated Total: $${total}+
               <div className="grid gap-4 md:grid-cols-2">
                 <input
                   type="date"
-                  required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
@@ -286,9 +348,29 @@ Estimated Total: $${total}+
               <h3 className="mb-5 mt-12 text-2xl font-black">Contact Information</h3>
 
               <div className="grid gap-4">
-                <input type="text" required placeholder="Full name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold" />
-                <input type="tel" required placeholder="Phone number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold" />
-                <input type="email" required placeholder="Email address" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold" />
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+
+                <input
+                  type="tel"
+                  placeholder="Phone number"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
               </div>
             </div>
 
@@ -326,11 +408,17 @@ Estimated Total: $${total}+
 
               <div className="mt-10 rounded-3xl bg-white/10 p-8">
                 <p className="text-neutral-400">Estimated Total</p>
-                <p className="mt-2 text-6xl font-black text-sky-400">${total}+</p>
+                <p className="mt-2 text-6xl font-black text-sky-400">
+                  ${total}+
+                </p>
               </div>
 
-              <button onClick={handleConfirmBooking} className="mt-10 w-full rounded-full bg-sky-400 px-8 py-5 text-lg font-black text-black transition hover:scale-[1.02]">
-                Confirm Booking
+              <button
+                onClick={handleConfirmBooking}
+                disabled={isSubmitting}
+                className="mt-10 w-full rounded-full bg-sky-400 px-8 py-5 text-lg font-black text-black transition hover:scale-[1.02] disabled:opacity-60"
+              >
+                {isSubmitting ? "Sending Booking..." : "Confirm Booking"}
               </button>
 
               <p className="mt-4 text-center text-sm text-neutral-500">
@@ -351,14 +439,26 @@ Estimated Total: $${total}+
 
           <div className="grid gap-6 md:grid-cols-3">
             {portfolioImages.map((image, index) => (
-              <div key={index} className="overflow-hidden rounded-[2rem] border border-white/10">
-                <img src={image} alt="Detailing" className="h-80 w-full object-cover transition duration-500 hover:scale-110" />
+              <div
+                key={index}
+                className="overflow-hidden rounded-[2rem] border border-white/10"
+              >
+                <img
+                  src={image}
+                  alt="Detailing"
+                  className="h-80 w-full object-cover transition duration-500 hover:scale-110"
+                />
               </div>
             ))}
           </div>
 
           <div className="mt-10 flex justify-center">
-            <a href="https://instagram.com/diordetailinginc" target="_blank" rel="noopener noreferrer" className="rounded-full bg-sky-400 px-8 py-4 font-bold text-black transition hover:scale-105">
+            <a
+              href="https://instagram.com/diordetailinginc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-sky-400 px-8 py-4 font-bold text-black transition hover:scale-105"
+            >
               View More on Instagram @diordetailinginc
             </a>
           </div>
