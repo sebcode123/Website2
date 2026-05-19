@@ -68,7 +68,14 @@ const portfolioImages = [
   "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop",
 ];
 
-const times = ["9:00 AM", "10:30 AM", "12:00 PM", "1:30 PM", "3:00 PM", "4:30 PM"];
+const times = [
+  "9:00 AM",
+  "10:30 AM",
+  "12:00 PM",
+  "1:30 PM",
+  "3:00 PM",
+  "4:30 PM",
+];
 
 export default function App() {
   const [carType, setCarType] = useState(carTypes[0]);
@@ -96,6 +103,24 @@ export default function App() {
       return [...current, item];
     });
   };
+
+  const bookingMessage = encodeURIComponent(`
+New Dior Detailing Booking
+
+Vehicle: ${carType.name}
+Service: ${service.name}
+Add Ons:
+${
+  selectedAddOns.length
+    ? selectedAddOns.map((item) => item.name).join(", ")
+    : "None"
+}
+
+Date: ${date || "Not picked"}
+Time: ${time}
+
+Estimated Total: $${total}+
+  `);
 
   return (
     <div className="bg-black text-white">
@@ -353,9 +378,12 @@ export default function App() {
                 </p>
               </div>
 
-              <button className="mt-10 w-full rounded-full bg-sky-400 px-8 py-5 text-lg font-black text-black transition hover:scale-[1.02]">
+              <a
+                href={`sms:8453766000?body=${bookingMessage}`}
+                className="mt-10 block w-full rounded-full bg-sky-400 px-8 py-5 text-center text-lg font-black text-black transition hover:scale-[1.02]"
+              >
                 Confirm Booking
-              </button>
+              </a>
             </div>
           </div>
         </div>
