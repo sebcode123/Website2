@@ -1,12 +1,10 @@
 import React, { useMemo, useState } from "react";
 import {
   CalendarCheck,
-  Camera,
   Car,
   Phone,
   Sparkles,
 } from "lucide-react";
-
 import logoImage from "../logo.png";
 
 const backgroundImage =
@@ -30,6 +28,38 @@ const addOns = [
   { name: "Ceramic Coating", price: 350 },
   { name: "Wax Application", price: 100 },
   { name: "Clay Bar Treatment", price: 75 },
+  { name: "Paint Correction", price: "Call for custom quote" },
+];
+
+const serviceCards = [
+  {
+    title: "Exterior Detail",
+    desc: "Deep clean, decontaminate, and protect your exterior to a showroom shine.",
+  },
+  {
+    title: "Interior Detail",
+    desc: "Thorough interior cleaning for a fresh, comfortable driving experience.",
+  },
+  {
+    title: "Full Detail Package",
+    desc: "The ultimate complete clean for interior, exterior, and everything in between.",
+  },
+  {
+    title: "Ceramic Coating",
+    desc: "Long-lasting paint protection that adds gloss, depth, and water resistance.",
+  },
+  {
+    title: "Wax Application",
+    desc: "Premium wax finish that enhances shine and adds a protective layer.",
+  },
+  {
+    title: "Paint Correction",
+    desc: "Removes swirl marks, light scratches, and restores deep paint gloss.",
+  },
+  {
+    title: "Clay Bar Treatment",
+    desc: "Removes embedded contaminants for a smooth, clean paint surface.",
+  },
 ];
 
 const portfolioImages = [
@@ -38,16 +68,19 @@ const portfolioImages = [
   "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?q=80&w=1200&auto=format&fit=crop",
 ];
 
+const times = ["9:00 AM", "10:30 AM", "12:00 PM", "1:30 PM", "3:00 PM", "4:30 PM"];
+
 export default function App() {
   const [carType, setCarType] = useState(carTypes[0]);
   const [service, setService] = useState(services[0]);
   const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState(times[0]);
 
   const total = useMemo(() => {
-    const addOnTotal = selectedAddOns.reduce(
-      (sum, item) => sum + item.price,
-      0
-    );
+    const addOnTotal = selectedAddOns.reduce((sum, item) => {
+      return sum + (typeof item.price === "number" ? item.price : 0);
+    }, 0);
 
     return service.price + carType.extra + addOnTotal;
   }, [service, carType, selectedAddOns]);
@@ -103,6 +136,7 @@ export default function App() {
             <a
               href="https://instagram.com/diordetailinginc"
               target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full border border-white/20 bg-white/10 px-8 py-4 font-bold backdrop-blur transition hover:bg-white/20"
             >
               @diordetailinginc
@@ -117,32 +151,22 @@ export default function App() {
         </h2>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {services.map((item) => (
+          {serviceCards.map((item) => (
             <div
-              key={item.name}
+              key={item.title}
               className="rounded-3xl border border-white/10 bg-neutral-900 p-8 shadow-2xl"
             >
               <Sparkles className="mb-5 h-10 w-10 text-sky-400" />
 
-              <h3 className="text-2xl font-bold">{item.name}</h3>
+              <h3 className="text-2xl font-bold">
+                {item.title}
+              </h3>
 
               <p className="mt-4 text-neutral-400">
-                Starting at ${item.price}
+                {item.desc}
               </p>
             </div>
           ))}
-
-          <div className="rounded-3xl border border-white/10 bg-neutral-900 p-8 shadow-2xl">
-            <Sparkles className="mb-5 h-10 w-10 text-sky-400" />
-
-            <h3 className="text-2xl font-bold">
-              Paint Correction
-            </h3>
-
-            <p className="mt-4 text-neutral-400">
-              Call for custom quote
-            </p>
-          </div>
         </div>
       </section>
 
@@ -226,10 +250,37 @@ export default function App() {
                     </span>
 
                     <span className="font-bold">
-                      +${item.price}
+                      {typeof item.price === "number"
+                        ? `+$${item.price}`
+                        : item.price}
                     </span>
                   </button>
                 ))}
+              </div>
+
+              <h3 className="mb-5 mt-12 text-2xl font-black">
+                Choose Date & Time
+              </h3>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+
+                <select
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                >
+                  {times.map((timeOption) => (
+                    <option key={timeOption}>
+                      {timeOption}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -270,6 +321,26 @@ export default function App() {
                     {selectedAddOns.length}
                   </span>
                 </div>
+
+                <div className="flex justify-between border-b border-white/10 pb-3">
+                  <span className="text-neutral-400">
+                    Date
+                  </span>
+
+                  <span className="font-bold">
+                    {date || "Not picked"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-b border-white/10 pb-3">
+                  <span className="text-neutral-400">
+                    Time
+                  </span>
+
+                  <span className="font-bold">
+                    {time}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-10 rounded-3xl bg-white/10 p-8">
@@ -278,7 +349,7 @@ export default function App() {
                 </p>
 
                 <p className="mt-2 text-6xl font-black text-sky-400">
-                  ${total}
+                  ${total}+
                 </p>
               </div>
 
@@ -292,15 +363,19 @@ export default function App() {
 
       <section className="px-6 py-24">
         <div className="mx-auto max-w-7xl">
-          <h2 className="mb-14 text-center text-5xl font-black">
+          <h2 className="mb-6 text-center text-5xl font-black">
             Portfolio
           </h2>
+
+          <p className="mb-14 text-center text-neutral-400">
+            Check out our latest detailing work and transformations.
+          </p>
 
           <div className="grid gap-6 md:grid-cols-3">
             {portfolioImages.map((image, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-[2rem]"
+                className="overflow-hidden rounded-[2rem] border border-white/10"
               >
                 <img
                   src={image}
@@ -309,6 +384,17 @@ export default function App() {
                 />
               </div>
             ))}
+          </div>
+
+          <div className="mt-10 flex justify-center">
+            <a
+              href="https://instagram.com/diordetailinginc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-sky-400 px-8 py-4 font-bold text-black transition hover:scale-105"
+            >
+              View More on Instagram @diordetailinginc
+            </a>
           </div>
         </div>
       </section>
