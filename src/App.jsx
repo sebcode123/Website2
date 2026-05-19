@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   CalendarCheck,
   Car,
+  CheckCircle,
   Phone,
   Sparkles,
 } from "lucide-react";
@@ -84,6 +85,11 @@ export default function App() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState(times[0]);
 
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
   const total = useMemo(() => {
     const addOnTotal = selectedAddOns.reduce((sum, item) => {
       return sum + (typeof item.price === "number" ? item.price : 0);
@@ -104,23 +110,109 @@ export default function App() {
     });
   };
 
-  const bookingMessage = encodeURIComponent(`
+  const bookingDetails = `
 New Dior Detailing Booking
+
+Name: ${customerName || "Not provided"}
+Phone: ${customerPhone || "Not provided"}
+Email: ${customerEmail || "Not provided"}
 
 Vehicle: ${carType.name}
 Service: ${service.name}
-Add Ons:
-${
-  selectedAddOns.length
-    ? selectedAddOns.map((item) => item.name).join(", ")
-    : "None"
-}
+Add Ons: ${
+    selectedAddOns.length
+      ? selectedAddOns.map((item) => item.name).join(", ")
+      : "None"
+  }
 
 Date: ${date || "Not picked"}
 Time: ${time}
 
 Estimated Total: $${total}+
-  `);
+`;
+
+  const bookingMessage = encodeURIComponent(bookingDetails);
+
+  const handleConfirmBooking = () => {
+    setBookingConfirmed(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (bookingConfirmed) {
+    return (
+      <div className="min-h-screen bg-black px-6 py-20 text-white">
+        <div className="mx-auto max-w-3xl rounded-[2rem] border border-sky-400/30 bg-neutral-950 p-8 text-center shadow-2xl md:p-14">
+          <img
+            src={logoImage}
+            alt="Dior Detailing"
+            className="mx-auto mb-8 w-56 drop-shadow-[0_0_35px_rgba(56,189,248,0.45)]"
+          />
+
+          <CheckCircle className="mx-auto mb-6 h-16 w-16 text-sky-400" />
+
+          <h1 className="text-4xl font-black md:text-6xl">
+            Booking Request Confirmed
+          </h1>
+
+          <p className="mt-5 text-lg leading-8 text-neutral-300">
+            Thank you{customerName ? `, ${customerName}` : ""}. Your Dior
+            Detailing booking request has been created.
+          </p>
+
+          <div className="mt-8 rounded-3xl bg-white/10 p-6 text-left">
+            <h2 className="mb-4 text-2xl font-black text-sky-400">
+              Booking Summary
+            </h2>
+
+            <p><strong>Vehicle:</strong> {carType.name}</p>
+            <p><strong>Service:</strong> {service.name}</p>
+            <p>
+              <strong>Add Ons:</strong>{" "}
+              {selectedAddOns.length
+                ? selectedAddOns.map((item) => item.name).join(", ")
+                : "None"}
+            </p>
+            <p><strong>Date:</strong> {date || "Not picked"}</p>
+            <p><strong>Time:</strong> {time}</p>
+            <p><strong>Estimated Total:</strong> ${total}+</p>
+          </div>
+
+          <div className="mt-8 rounded-3xl border border-sky-400/30 bg-sky-400/10 p-6">
+            <p className="text-neutral-200">
+              A reminder/confirmation will be sent to:
+            </p>
+
+            <p className="mt-3 font-bold text-sky-300">
+              {customerPhone || "No phone entered"}
+            </p>
+
+            <p className="font-bold text-sky-300">
+              {customerEmail || "No email entered"}
+            </p>
+
+            <p className="mt-4 text-sm text-neutral-400">
+              Note: this demo confirms the booking on-screen. Automatic email
+              and text reminders require a backend service.
+            </p>
+          </div>
+
+          <a
+            href={`sms:8453766000?body=${bookingMessage}`}
+            className="mt-8 block rounded-full bg-sky-400 px-8 py-4 font-black text-black transition hover:scale-[1.02]"
+          >
+            Text Booking Details to Dior Detailing
+          </a>
+
+          <button
+            onClick={() => setBookingConfirmed(false)}
+            className="mt-4 rounded-full border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+          >
+            Back to Website
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black text-white">
@@ -307,6 +399,36 @@ Estimated Total: $${total}+
                   ))}
                 </select>
               </div>
+
+              <h3 className="mb-5 mt-12 text-2xl font-black">
+                Contact Information
+              </h3>
+
+              <div className="grid gap-4">
+                <input
+                  type="text"
+                  placeholder="Full name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+
+                <input
+                  type="tel"
+                  placeholder="Phone number"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="rounded-3xl border border-neutral-300 bg-white p-6 font-semibold"
+                />
+              </div>
             </div>
 
             <div className="rounded-[2rem] bg-black p-10 text-white shadow-2xl">
@@ -318,53 +440,28 @@ Estimated Total: $${total}+
 
               <div className="mt-10 space-y-5">
                 <div className="flex justify-between border-b border-white/10 pb-3">
-                  <span className="text-neutral-400">
-                    Vehicle
-                  </span>
-
-                  <span className="font-bold">
-                    {carType.name}
-                  </span>
+                  <span className="text-neutral-400">Vehicle</span>
+                  <span className="font-bold">{carType.name}</span>
                 </div>
 
                 <div className="flex justify-between border-b border-white/10 pb-3">
-                  <span className="text-neutral-400">
-                    Service
-                  </span>
-
-                  <span className="font-bold">
-                    {service.name}
-                  </span>
+                  <span className="text-neutral-400">Service</span>
+                  <span className="font-bold">{service.name}</span>
                 </div>
 
                 <div className="flex justify-between border-b border-white/10 pb-3">
-                  <span className="text-neutral-400">
-                    Add Ons
-                  </span>
-
-                  <span className="font-bold">
-                    {selectedAddOns.length}
-                  </span>
+                  <span className="text-neutral-400">Add Ons</span>
+                  <span className="font-bold">{selectedAddOns.length}</span>
                 </div>
 
                 <div className="flex justify-between border-b border-white/10 pb-3">
-                  <span className="text-neutral-400">
-                    Date
-                  </span>
-
-                  <span className="font-bold">
-                    {date || "Not picked"}
-                  </span>
+                  <span className="text-neutral-400">Date</span>
+                  <span className="font-bold">{date || "Not picked"}</span>
                 </div>
 
                 <div className="flex justify-between border-b border-white/10 pb-3">
-                  <span className="text-neutral-400">
-                    Time
-                  </span>
-
-                  <span className="font-bold">
-                    {time}
-                  </span>
+                  <span className="text-neutral-400">Time</span>
+                  <span className="font-bold">{time}</span>
                 </div>
               </div>
 
@@ -378,12 +475,16 @@ Estimated Total: $${total}+
                 </p>
               </div>
 
-              <a
-                href={`sms:8453766000?body=${bookingMessage}`}
-                className="mt-10 block w-full rounded-full bg-sky-400 px-8 py-5 text-center text-lg font-black text-black transition hover:scale-[1.02]"
+              <button
+                onClick={handleConfirmBooking}
+                className="mt-10 w-full rounded-full bg-sky-400 px-8 py-5 text-lg font-black text-black transition hover:scale-[1.02]"
               >
                 Confirm Booking
-              </a>
+              </button>
+
+              <p className="mt-4 text-center text-sm text-neutral-500">
+                After confirming, you’ll see your booking confirmation screen.
+              </p>
             </div>
           </div>
         </div>
